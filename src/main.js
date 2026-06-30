@@ -8,11 +8,26 @@ import { currencyManager } from './systems/CurrencyManager.js';
 import { adManager } from './systems/AdManager.js';
 import { stripeManager } from './systems/StripeManager.js';
 
+// Measure viewport after page load — accounts for mobile browser chrome
+function getGameSize() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  // Cap ratio: use 9:16 portrait max, but always fill available space
+  const maxW = Math.min(w, 420);
+  const ratio = Math.min(maxW / w, h / h);
+  return {
+    width: Math.round(Math.min(w, maxW)),
+    height: Math.round(Math.min(h, maxW * 1.3)), // slightly shorter than 9:16
+  };
+}
+
+const size = getGameSize();
+
 const config = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  width: 380,
-  height: 500,
+  width: size.width,
+  height: size.height,
   backgroundColor: '#0a0a1a',
   scale: {
     mode: Phaser.Scale.FIT,
@@ -29,6 +44,12 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+// Re-scale on resize/orientation change
+window.addEventListener('resize', () => {
+  const s = getGameSize();
+  game.scale.resize(s.width, s.height);
+});
 
 // Hide loading screen once game starts
 game.events.on('ready', () => {
