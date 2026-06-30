@@ -11,8 +11,8 @@ import { stripeManager } from './systems/StripeManager.js';
 const config = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  width: 420,
-  height: 700,
+  width: 380,
+  height: 620,
   backgroundColor: '#0a0a1a',
   scale: {
     mode: Phaser.Scale.FIT,
