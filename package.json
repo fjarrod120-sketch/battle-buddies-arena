@@ -1,0 +1,29 @@
+{
+  "name": "battle-buddies-arena",
+  "version": "1.0.0",
+  "description": "Re-skinnable mobile hero arena game — bright colours, wacky sounds, unlockable characters, in-game currency, Stripe coin packs, AdMob rewarded ads.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fjarrod120-sketch/battle-buddies-arena.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fjarrod120-sketch/battle-buddies-arena/issues"
+  },
+  "homepage": "https://github.com/fjarrod120-sketch/battle-buddies-arena#readme",
+  "dependencies": {
+    "phaser": "^4.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1",
+    "vite": "^8.1.0"
+  }
+}
