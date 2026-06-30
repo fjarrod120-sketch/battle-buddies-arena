@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+// Phaser loaded as global from CDN
 import { BootScene } from './scenes/BootScene.js';
 import { MenuScene } from './scenes/MenuScene.js';
 import { SelectScene } from './scenes/SelectScene.js';
@@ -29,6 +29,12 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+// Hide loading screen once game starts
+game.events.on('ready', () => {
+  const ls = document.getElementById('loading-screen');
+  if (ls) ls.style.display = 'none';
+});
 
 // Init managers
 adManager.init();

@@ -1,6 +1,12 @@
 import { defineConfig } from 'vite';
 export default defineConfig({
   base: './',
-  build: { outDir: 'dist', minify: 'esbuild' },
-  server: { port: 3000, host: true }
+  build: {
+    outDir: 'dist',
+    minify: 'esbuild',
+    rollupOptions: {
+      external: ['phaser'],
+    },
+  },
+  server: { port: 3000, host: true },
 });

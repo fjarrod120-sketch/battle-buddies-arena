@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+// Phaser loaded as global from CDN
 import { SoundGenerator } from '../systems/SoundGenerator.js';
 import { WEAPONS, ABILITIES } from '../entities/Characters.js';
 import { COLORS, CURRENCY } from '../config.js';

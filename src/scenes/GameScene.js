@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+// Phaser loaded as global from CDN
 import { currencyManager } from '../systems/CurrencyManager.js';
 import { WEAPONS, ABILITIES } from '../entities/Characters.js';
 import { adManager } from '../systems/AdManager.js';
