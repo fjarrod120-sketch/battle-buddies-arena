@@ -2,15 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Battle Buddies Arena</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a1a; touch-action: none; }
-    body { display: flex; align-items: center; justify-content: center; }
-    canvas { display: block; }
+    html { height: 100%; overflow: hidden; }
+    body {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; height: 100dvh;
+      overflow: hidden; overscroll-behavior: none;
+      background: #0a0a1a;
+      touch-action: manipulation;
+      -webkit-overflow-scrolling: none;
+    }
+    #game-container {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    canvas { display: block; touch-action: none; }
     #ad-container { display: none; }
     #loading-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -26,11 +37,11 @@
     }
     #loading-screen .bar-fill {
       height: 100%; width: 0%; background: #ff6b35; border-radius: 3px;
-      animation: load 2s ease-in-out forwards;
+      animation: load 1.5s ease-in-out forwards;
     }
     @keyframes load { to { width: 100%; } }
   </style>
-  <script type="module" crossorigin src="./assets/index-DF6k2xAD.js"></script>
+  <script type="module" crossorigin src="./assets/index-CNQ3IVQc.js"></script>
 </head>
 <body>
   <div id="loading-screen">
