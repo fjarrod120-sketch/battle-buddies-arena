@@ -234,33 +234,118 @@ export class GameScene extends Phaser.Scene {
   }
 
   _setupControls(w, h) {
-    this.keys = {
-      W: this.input.keyboard.addKey('W'),
-      A: this.input.keyboard.addKey('A'),
-      S: this.input.keyboard.addKey('S'),
-      D: this.input.keyboard.addKey('D'),
-      SPACE: this.input.keyboard.addKey('SPACE'),
-      Q: this.input.keyboard.addKey('Q'),
-      E: this.input.keyboard.addKey('E'),
-    };
+    this.keys = {};
+    // Only set up keyboard if keyboard input is available
+    if (this.input.keyboard) {
+      this.keys = {
+        W: this.input.keyboard.addKey('W'),
+        A: this.input.keyboard.addKey('A'),
+        S: this.input.keyboard.addKey('S'),
+        D: this.input.keyboard.addKey('D'),
+        SPACE: this.input.keyboard.addKey('SPACE'),
+        Q: this.input.keyboard.addKey('Q'),
+      };
+    }
 
-    // Virtual joystick via touch
+    // Touch joystick state
     this.joystickActive = false;
-    this.joystickPos = { x: 0, y: 0 };
-    this.joystickBase = null;
-    this.joystickThumb = null;
+    this.joystickId = -1;
+    this.joystickX = 0;
+    this.joystickY = 0;
+    this.touchShoot = false;
+    this.touchAimX = w / 2;
+    this.touchAimY = h / 2;
+    this.moveX = 0;
+    this.moveY = 0;
 
-    // Touch/mouse aim and shoot
-    this.aimX = w / 2;
-    this.aimY = h / 2;
+    // Joystick visual
+    this.joystickBase = this.add.circle(70, h - 90, 45, 0xffffff, 0.15).setDepth(90);
+    this.joystickThumb = this.add.circle(70, h - 90, 22, 0xffffff, 0.3).setDepth(91);
+    this.joystickBase.setVisible(false);
+    this.joystickThumb.setVisible(false);
 
-    this.input.on('pointermove', (pointer) => {
-      this.aimX = pointer.x;
-      this.aimY = pointer.y;
+    // Ability button (bottom-right)
+    const abilBtn = this.add.graphics().setDepth(90);
+    abilBtn.fillStyle(0xff6b35, 0.7);
+    abilBtn.fillCircle(w - 60, h - 60, 28);
+    abilBtn.lineStyle(3, 0xff8844, 1);
+    abilBtn.strokeCircle(w - 60, h - 60, 28);
+    this.abilBtn = abilBtn;
+    this.abilBtnLabel = this.add.text(w - 60, h - 60, '⚡', {
+      fontSize: '22px',
+    }).setOrigin(0.5).setDepth(91);
+
+    // Cooldown overlay on ability button
+    this.abilCooldownOverlay = this.add.graphics().setDepth(92);
+    this.abilCooldownOverlay.setVisible(false);
+
+    // Touch handlers
+    this.input.on('pointerdown', (pointer) => {
+      const sound = this.game.sound_gen;
+      sound.resume();
+
+      // Check if touching ability button area
+      const dx = pointer.x - (w - 60);
+      const dy = pointer.y - (h - 60);
+      if (Math.sqrt(dx*dx + dy*dy) < 36 && this.abilityCooldown <= 0) {
+        // Ability button tapped
+        if (this.player && this.player.alive && !this.player.stunned) {
+          this._useAbility(this.player, this.touchAimX, this.touchAimY);
+        }
+        return;
+      }
+
+      // Left side = joystick
+      if (pointer.x < w / 2) {
+        this.joystickActive = true;
+        this.joystickId = pointer.id;
+        this.joystickBase.setPosition(pointer.x, pointer.y);
+        this.joystickThumb.setPosition(pointer.x, pointer.y);
+        this.joystickBase.setVisible(true);
+        this.joystickThumb.setVisible(true);
+        this.joystickStartX = pointer.x;
+        this.joystickStartY = pointer.y;
+      } else {
+        // Right side = shoot
+        this.touchShoot = true;
+        this.touchAimX = pointer.x;
+        this.touchAimY = pointer.y;
+      }
     });
 
-    this.input.on('pointerdown', (pointer) => {
-      sound.resume();
+    this.input.on('pointermove', (pointer) => {
+      this.touchAimX = pointer.x;
+      this.touchAimY = pointer.y;
+
+      if (this.joystickActive && pointer.id === this.joystickId) {
+        const dx = pointer.x - this.joystickStartX;
+        const dy = pointer.y - this.joystickStartY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const maxDist = 40;
+        const clamped = Math.min(dist, maxDist);
+        const angle = Math.atan2(dy, dx);
+
+        this.joystickThumb.setPosition(
+          this.joystickStartX + Math.cos(angle) * clamped,
+          this.joystickStartY + Math.sin(angle) * clamped
+        );
+
+        // Normalized movement vector
+        this.moveX = (clamped / maxDist) * Math.cos(angle);
+        this.moveY = (clamped / maxDist) * Math.sin(angle);
+      }
+    });
+
+    this.input.on('pointerup', (pointer) => {
+      if (pointer.id === this.joystickId) {
+        this.joystickActive = false;
+        this.joystickId = -1;
+        this.joystickBase.setVisible(false);
+        this.joystickThumb.setVisible(false);
+        this.moveX = 0;
+        this.moveY = 0;
+      }
+      this.touchShoot = false;
     });
   }
 
@@ -325,38 +410,53 @@ export class GameScene extends Phaser.Scene {
     // Player movement
     if (this.player && this.player.alive && !this.player.stunned) {
       let vx = 0, vy = 0;
-      if (this.keys.A.isDown || this.keys.LEFT) vx = -1;
-      if (this.keys.D.isDown || this.keys.RIGHT) vx = 1;
-      if (this.keys.W.isDown || this.keys.UP) vy = -1;
-      if (this.keys.S.isDown || this.keys.DOWN) vy = 1;
+
+      // Keyboard input
+      if (this.keys.W && (this.keys.W.isDown || this.keys.UP)) vy = -1;
+      if (this.keys.S && (this.keys.S.isDown || this.keys.DOWN)) vy = 1;
+      if (this.keys.A && (this.keys.A.isDown || this.keys.LEFT)) vx = -1;
+      if (this.keys.D && (this.keys.D.isDown || this.keys.RIGHT)) vx = 1;
+
+      // Touch joystick input (overrides keyboard if active)
+      if (this.joystickActive) {
+        vx = this.moveX;
+        vy = this.moveY;
+      }
 
       // Normalize diagonal
-      if (vx !== 0 && vy !== 0) {
+      if (vx !== 0 && vy !== 0 && !this.joystickActive) {
         vx *= 0.707;
         vy *= 0.707;
       }
 
       this.player.body.setVelocity(vx * this.player.speed, vy * this.player.speed);
 
+      // Determine aim target
+      const aimX = this.touchAimX || width / 2;
+      const aimY = this.touchAimY || height / 2;
+
       // Face aim direction
       const angle = Phaser.Math.Angle.Between(
-        this.player.x, this.player.y, this.aimX, this.aimY
+        this.player.x, this.player.y, aimX, aimY
       );
       this.player.setRotation(angle);
 
-      // Auto-shoot (hold space or click)
-      if (this.keys.SPACE.isDown || this.input.activePointer.isDown) {
-        this._tryShoot(this.player, this.aimX, this.aimY);
+      // Auto-shoot (keyboard space, pointer held on right side, or touch shoot)
+      const keyboardShoot = this.keys.SPACE && this.keys.SPACE.isDown;
+      if (keyboardShoot || this.touchShoot) {
+        this._tryShoot(this.player, aimX, aimY);
       }
 
       // Ability (Q key)
-      if (this.keys.Q.isDown && this.abilityCooldown <= 0) {
-        this._useAbility(this.player, this.aimX, this.aimY);
+      if (this.keys.Q && this.keys.Q.isDown && this.abilityCooldown <= 0) {
+        this._useAbility(this.player, aimX, aimY);
       }
     }
 
-    // Update ability cooldown
-    if (this.abilityCooldown > 0) this.abilityCooldown -= delta;
+    // Update ability cooldown and visual
+    if (this.abilityCooldown > 0) {
+      this.abilityCooldown -= delta;
+    }
 
     // AI enemies
     this.enemies.forEach(enemy => {

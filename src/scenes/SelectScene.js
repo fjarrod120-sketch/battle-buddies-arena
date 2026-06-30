@@ -53,13 +53,39 @@ export class SelectScene extends Phaser.Scene {
     });
 
     // Back button
-    const backBtn = this.add.text(40, height - 40, '← BACK', {
-      fontSize: '18px', color: '#aaaaaa', fontFamily: 'Arial',
+    const backBtn = this.add.text(60, height - 35, '← BACK', {
+      fontSize: '16px', color: '#aaaaaa', fontFamily: 'Arial',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     backBtn.on('pointerdown', () => {
       sound.menuClick();
       this.scene.start('MenuScene');
     });
+
+    // FIGHT button — starts the match with selected character
+    const fightBtn = this.add.graphics();
+    fightBtn.fillStyle(0xff4444, 1);
+    fightBtn.fillRoundedRect(width / 2 - 80, height - 55, 160, 44, 14);
+    fightBtn.lineStyle(3, 0xff8844, 1);
+    fightBtn.strokeRoundedRect(width / 2 - 80, height - 55, 160, 44, 14);
+    fightBtn.setInteractive(
+      new Phaser.Geom.Rectangle(width / 2 - 80, height - 55, 160, 44),
+      Phaser.Geom.Rectangle.Contains
+    );
+    fightBtn.on('pointerdown', () => {
+      sound.menuClick();
+      const selectedId = currencyManager.getSelected();
+      const char = characters.find(c => c.id === selectedId);
+      if (char) {
+        this.scene.start('GameScene', {
+          mode: this.mode,
+          character: char
+        });
+      }
+    });
+    this.add.text(width / 2, height - 33, '⚔️ FIGHT!', {
+      fontSize: '20px', color: '#ffffff', fontFamily: 'Arial Black, Arial, sans-serif',
+      stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5);
 
     // No characters fallback
     if (!characters.length) {
